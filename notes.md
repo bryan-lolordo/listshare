@@ -196,3 +196,76 @@ If you need to verify, just check your repository on GitHub. Let me know if you 
 bryan-lolordo: add all the updated conversation to notes.md
 
 GitHub Copilot: (This conversation has been appended to notes.md as requested.)
+
+---
+
+## June 2025: Migration to PostgreSQL and Azure Deployment Steps
+
+### Backend Migration
+- Refactored backend (`server.js`) to use PostgreSQL instead of SQLite.
+- Installed `pg` and `dotenv` packages.
+- Added `.env` file for DB credentials.
+- Updated all SQL queries and schema for PostgreSQL compatibility.
+- Added SSL config to PostgreSQL connection for Azure compatibility.
+
+### Azure PostgreSQL Setup (CLI)
+- Set PowerShell variables for resource group, server, admin, password, and DB name.
+- Created resource group:
+  ```pwsh
+  az group create --name $RESOURCE_GROUP --location $LOCATION
+  ```
+- Created PostgreSQL Flexible Server (used allowed SKU):
+  ```pwsh
+  az postgres flexible-server create \
+    --resource-group $RESOURCE_GROUP \
+    --name $PG_SERVER \
+    --admin-user $PG_ADMIN \
+    --admin-password $PG_PASSWORD \
+    --location $LOCATION \
+    --sku-name Standard_D2s_v3 \
+    --version 15 \
+    --public-access 0.0.0.0
+  ```
+- Created database:
+  ```pwsh
+  az postgres flexible-server db create \
+    --resource-group $RESOURCE_GROUP \
+    --server-name $PG_SERVER \
+    --database-name $PG_DB
+  ```
+- Allowed local IP for dev access:
+  ```pwsh
+  $MYIP=(Invoke-RestMethod -Uri "https://api.ipify.org")
+  az postgres flexible-server firewall-rule create \
+    --resource-group $RESOURCE_GROUP \
+    --name $PG_SERVER \
+    --rule-name AllowMyIP \
+    --start-ip-address $MYIP \
+    --end-ip-address $MYIP
+  ```
+
+### Backend Environment
+- Updated `.env` with Azure PostgreSQL connection details:
+  ```
+  PGHOST=listsharepg9749.postgres.database.azure.com
+  PGUSER=pgadmin@listsharepg9749
+  PGPASSWORD=Yike5394#
+  PGDATABASE=listshare
+  PGPORT=5432
+  ```
+- Reset admin password in Azure Portal to ensure match with `.env`.
+
+### Troubleshooting
+- Fixed `EADDRINUSE` error by ensuring only one backend process runs on port 5000.
+- Fixed `ERR_MODULE_NOT_FOUND` for `dotenv` by running `npm install dotenv`.
+- Fixed Azure PostgreSQL SSL error by adding `ssl: { rejectUnauthorized: false }` to Pool config.
+- Fixed password authentication error by resetting password in Azure Portal and retyping in `.env`.
+
+### Next Steps
+- Test backend locally: `npm start` should show `Backend running on http://localhost:5000` with no errors.
+- If authentication fails, double-check username, password, and reset password in Azure Portal if needed.
+- Once backend works locally, proceed to Azure App Service deployment.
+
+---
+
+_This section documents the full chat and all recent steps for migrating to PostgreSQL and preparing for Azure deployment._

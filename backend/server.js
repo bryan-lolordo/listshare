@@ -1,83 +1,101 @@
 import express from 'express';
 import cors from 'cors';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-let db;
-(async () => {
-  db = await open({
-    filename: './db.sqlite3',
-    driver: sqlite3.Database
-  });
+// Connect to MongoDB (Cosmos DB)
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS lists (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      list_id INTEGER,
-      text TEXT NOT NULL,
-      link TEXT,
-      FOREIGN KEY(list_id) REFERENCES lists(id)
-    );
-  `);
-})();
+const db = mongoose.connection;
+db.on('error', (err) => console.error('MongoDB connection error:', err));
+db.once('open', () => console.log('Connected to MongoDB (Cosmos DB)'));
 
+// Mongoose Schemas and Models
+const listSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+});
+
+const itemSchema = new mongoose.Schema({
+  list_id: { type: mongoose.Schema.Types.ObjectId, ref: 'List', required: true },
+  text: { type: String, required: true },
+  link: String,
+});
+
+const List = mongoose.model('List', listSchema);
+const Item = mongoose.model('Item', itemSchema);
+
+// API Endpoints
 app.get('/api/lists', async (req, res) => {
-  const lists = await db.all('SELECT * FROM lists');
-  res.json(lists);
+  const lists = await List.find();
+  // Convert _id to id for frontend compatibility
+  res.json(lists.map(l => ({ id: l._id.toString(), title: l.title })));
 });
 
 app.get('/api/lists/:id/items', async (req, res) => {
-  const items = await db.all('SELECT * FROM items WHERE list_id = ?', req.params.id);
-  res.json(items);
+  const items = await Item.find({ list_id: req.params.id });
+  // Convert _id to id and list_id to string
+  res.json(items.map(i => ({
+    id: i._id.toString(),
+    list_id: i.list_id.toString(),
+    text: i.text,
+    link: i.link
+  })));
 });
 
 app.post('/api/lists', async (req, res) => {
   const { title } = req.body;
-  const result = await db.run('INSERT INTO lists (title) VALUES (?)', title);
-  res.json({ id: result.lastID, title });
+  const list = new List({ title });
+  await list.save();
+  res.json({ id: list._id.toString(), title: list.title });
 });
 
 // Delete a list and its items
 app.delete('/api/lists/:id', async (req, res) => {
-  await db.run('DELETE FROM items WHERE list_id = ?', req.params.id);
-  await db.run('DELETE FROM lists WHERE id = ?', req.params.id);
+  await Item.deleteMany({ list_id: req.params.id });
+  await List.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
 // Edit a list title
 app.put('/api/lists/:id', async (req, res) => {
   const { title } = req.body;
-  await db.run('UPDATE lists SET title = ? WHERE id = ?', title, req.params.id);
+  await List.findByIdAndUpdate(req.params.id, { title });
   res.json({ success: true });
 });
 
 // Delete an item
 app.delete('/api/items/:id', async (req, res) => {
-  await db.run('DELETE FROM items WHERE id = ?', req.params.id);
+  await Item.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
 // Edit an item (text and link)
 app.put('/api/items/:id', async (req, res) => {
   const { text, link } = req.body;
-  await db.run('UPDATE items SET text = ?, link = ? WHERE id = ?', text, link, req.params.id);
+  await Item.findByIdAndUpdate(req.params.id, { text, link });
   res.json({ success: true });
 });
 
 // Add item to a list (with link)
 app.post('/api/lists/:id/items', async (req, res) => {
   const { text, link } = req.body;
-  const result = await db.run('INSERT INTO items (list_id, text, link) VALUES (?, ?, ?)', req.params.id, text, link);
-  res.json({ id: result.lastID, text, link });
+  const item = new Item({ list_id: req.params.id, text, link });
+  await item.save();
+  res.json({
+    id: item._id.toString(),
+    list_id: item.list_id.toString(),
+    text: item.text,
+    link: item.link
+  });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
