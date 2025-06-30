@@ -97,5 +97,8 @@ app.post('/api/lists/:id/items', async (req, res) => {
   });
 });
 
+// Health check route
+app.get('/', (req, res) => res.send('API is running'));
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
