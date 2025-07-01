@@ -14,20 +14,20 @@ function App() {
   const [editItemLink, setEditItemLink] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/lists')
+    fetch('/api/lists')
       .then(res => res.json())
       .then(setLists);
   }, []);
 
   const refreshItems = async (listId) => {
-    const res = await fetch(`http://localhost:5000/api/lists/${listId}/items`);
+    const res = await fetch(`/api/lists/${listId}/items`);
     const data = await res.json();
     setItems(prev => ({ ...prev, [listId]: data }));
   };
 
   const handleAddList = async () => {
     if (!newList) return;
-    const res = await fetch('http://localhost:5000/api/lists', {
+    const res = await fetch('/api/lists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newList })
@@ -38,7 +38,7 @@ function App() {
   };
 
   const handleDeleteList = async (id) => {
-    await fetch(`http://localhost:5000/api/lists/${id}`, { method: 'DELETE' });
+    await fetch(`/api/lists/${id}`, { method: 'DELETE' });
     setLists(lists.filter(l => l.id !== id));
     setItems(prev => { const copy = { ...prev }; delete copy[id]; return copy; });
   };
@@ -49,7 +49,7 @@ function App() {
   };
 
   const handleSaveEditList = async (id) => {
-    await fetch(`http://localhost:5000/api/lists/${id}`, {
+    await fetch(`/api/lists/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: editListTitle })
@@ -67,7 +67,7 @@ function App() {
     const text = newItems[listId];
     const link = newLinks[listId] || '';
     if (!text) return;
-    const res = await fetch(`http://localhost:5000/api/lists/${listId}/items`, {
+    const res = await fetch(`/api/lists/${listId}/items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, link })
@@ -82,7 +82,7 @@ function App() {
   };
 
   const handleDeleteItem = async (itemId, listId) => {
-    await fetch(`http://localhost:5000/api/items/${itemId}`, { method: 'DELETE' });
+    await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
     setItems(prev => ({
       ...prev,
       [listId]: prev[listId].filter(i => i.id !== itemId)
@@ -96,7 +96,7 @@ function App() {
   };
 
   const handleSaveEditItem = async (itemId, listId) => {
-    await fetch(`http://localhost:5000/api/items/${itemId}`, {
+    await fetch(`/api/items/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: editItemText, link: editItemLink })
