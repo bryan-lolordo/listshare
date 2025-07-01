@@ -45,3 +45,92 @@ listCards.forEach(card => {
     }
   }
 });
+
+// Example lists data (would come from backend in a real app)
+let exampleLists = [
+  {
+    title: "Best Travel Products",
+    category: "Travel",
+    items: [
+      "Travel Pillow",
+      "Universal Adapter",
+      "Portable Charger",
+      "Collapsible Water Bottle",
+      "Noise Cancelling Headphones",
+      "Compression Packing Cubes"
+    ]
+  },
+  {
+    title: "Top Kitchen Gadgets",
+    category: "Kitchen",
+    items: [
+      "Spiralizer",
+      "Instant Pot",
+      "Milk Frother",
+      "Digital Food Scale",
+      "Garlic Press"
+    ]
+  },
+  {
+    title: "Favorite Books 2025",
+    category: "Books",
+    items: [
+      "The Creative Act",
+      "Project Hail Mary",
+      "Atomic Habits",
+      "Tomorrow, and Tomorrow, and Tomorrow"
+    ]
+  }
+];
+
+function getCategories() {
+  const cats = new Set(exampleLists.map(l => l.category));
+  return ["All", ...Array.from(cats)];
+}
+
+function renderCategoryFilters() {
+  const filtersDiv = document.getElementById("category-filters");
+  filtersDiv.innerHTML = "";
+  getCategories().forEach(cat => {
+    const btn = document.createElement("button");
+    btn.textContent = cat;
+    btn.onclick = () => renderExampleLists(cat);
+    filtersDiv.appendChild(btn);
+  });
+}
+
+function renderExampleLists(category = "All") {
+  const grid = document.getElementById("example-lists");
+  grid.innerHTML = "";
+  let lists = category === "All" ? exampleLists : exampleLists.filter(l => l.category === category);
+  if (lists.length === 0) {
+    grid.innerHTML = `<div class='no-lists'>No lists in this category yet.</div>`;
+    return;
+  }
+  lists.forEach(list => {
+    const card = document.createElement("div");
+    card.className = "list-card";
+    card.innerHTML = `
+      <h3>${list.title}</h3>
+      <div class="category-label">${list.category}</div>
+      <ul>${list.items.map(i => `<li>${i}</li>`).join("")}</ul>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById("example-list-form").onsubmit = function(e) {
+  e.preventDefault();
+  const title = document.getElementById("list-title").value.trim();
+  const category = document.getElementById("list-category").value.trim();
+  const items = document.getElementById("list-items").value.split(",").map(i => i.trim()).filter(Boolean);
+  if (!title || !category || items.length === 0) return;
+  exampleLists.push({ title, category, items });
+  renderCategoryFilters();
+  renderExampleLists(category);
+  this.reset();
+};
+
+// Initial render
+renderCategoryFilters();
+renderExampleLists();

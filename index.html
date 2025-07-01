@@ -41,41 +41,21 @@
     </div>
   </section>
   <section id="examples" class="examples">
-    <h2>Example Lists</h2>
-    <div class="list-grid">
-      <div class="list-card">
-        <h3>Best Travel Products</h3>
-        <ul>
-          <li>Travel Pillow</li>
-          <li>Universal Adapter</li>
-          <li>Portable Charger</li>
-          <li>Collapsible Water Bottle</li>
-          <li>Noise Cancelling Headphones</li>
-          <li>Compression Packing Cubes</li>
-        </ul>
-        <a href="#">View More</a>
-      </div>
-      <div class="list-card">
-        <h3>Top Kitchen Gadgets</h3>
-        <ul>
-          <li>Spiralizer</li>
-          <li>Instant Pot</li>
-          <li>Milk Frother</li>
-          <li>Digital Food Scale</li>
-          <li>Garlic Press</li>
-        </ul>
-        <a href="#">View More</a>
-      </div>
-      <div class="list-card">
-        <h3>Favorite Books 2025</h3>
-        <ul>
-          <li>The Creative Act</li>
-          <li>Project Hail Mary</li>
-          <li>Atomic Habits</li>
-          <li>Tomorrow, and Tomorrow, and Tomorrow</li>
-        </ul>
-        <a href="#">View More</a>
-      </div>
+    <h2>Example Lists by Category</h2>
+    <div id="category-filters" class="category-filters">
+      <!-- Category filter buttons will be injected here by JS -->
+    </div>
+    <div id="example-lists" class="list-grid">
+      <!-- Example lists will be injected here by JS -->
+    </div>
+    <div id="add-example-list" class="add-example-list">
+      <h3>Add a New Example List</h3>
+      <form id="example-list-form">
+        <input type="text" id="list-title" placeholder="List Title" required />
+        <input type="text" id="list-category" placeholder="Category (e.g. Travel, Books)" required />
+        <textarea id="list-items" placeholder="Items (comma separated)" required></textarea>
+        <button type="submit">Add List</button>
+      </form>
     </div>
   </section>
   <footer id="footer">
