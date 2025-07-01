@@ -48,6 +48,7 @@ console.log("💡 MONGODB_URI:", process.env.MONGODB_URI ?? "NOT SET");
 // Mongoose Schemas and Models
 const listSchema = new mongoose.Schema({
   title: { type: String, required: true },
+  category: { type: String, required: true }, // New: category field
 });
 
 const itemSchema = new mongoose.Schema({
@@ -87,10 +88,13 @@ app.get('/api/lists/:id/items', async (req, res) => {
 
 app.post('/api/lists', async (req, res) => {
   try {
-    const { title } = req.body;
-    const list = new List({ title });
+    const { title, category } = req.body;
+    if (!title || !category) {
+      return res.status(400).json({ error: 'Title and category are required' });
+    }
+    const list = new List({ title, category });
     await list.save();
-    res.json({ id: list._id.toString(), title: list.title });
+    res.json({ id: list._id.toString(), title: list.title, category: list.category });
   } catch (err) {
     console.error("Error in POST /api/lists:", err);
     res.status(500).json({ error: "Database error", details: err.message });
@@ -158,6 +162,23 @@ app.post('/api/lists/:id/items', async (req, res) => {
     });
   } catch (err) {
     console.error("Error in POST /api/lists/:id/items:", err);
+    res.status(500).json({ error: "Database error", details: err.message });
+  }
+});
+
+// New endpoint: Get all lists grouped by category
+app.get('/api/example-lists', async (req, res) => {
+  try {
+    const lists = await List.find();
+    // Group lists by category
+    const grouped = {};
+    lists.forEach(l => {
+      if (!grouped[l.category]) grouped[l.category] = [];
+      grouped[l.category].push({ id: l._id.toString(), title: l.title });
+    });
+    res.json(grouped);
+  } catch (err) {
+    console.error("Error in /api/example-lists:", err);
     res.status(500).json({ error: "Database error", details: err.message });
   }
 });
