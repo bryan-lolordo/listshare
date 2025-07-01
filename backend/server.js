@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
 dotenv.config();
 
 const app = express();
@@ -139,8 +140,20 @@ app.post('/api/lists/:id/items', async (req, res) => {
   }
 });
 
+// Serve static files from client-build
+app.use(express.static(path.join(__dirname, 'client-build')));
+
 // Health check route
 app.get('/', (req, res) => res.send('API is running'));
+
+// Catch-all: serve React index.html for any non-API route
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, 'client-build', 'index.html'));
+  } else {
+    res.status(404).send('Not found');
+  }
+});
 
 // app listen call
 const port = process.env.PORT || 8080;
